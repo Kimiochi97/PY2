@@ -12,7 +12,7 @@ class Tarefa(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
     descricao = db.Column(db.Text, nullable=True)
-    duracao = db.Column(db.Integer, nullable=False)  # em segundos
+    duracao = db.Column(db.Integer, nullable=False)  # em minutos
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
     data_limite = db.Column(db.DateTime, nullable=False)
     progresso = db.Column(db.Float, default=0.0)
@@ -27,7 +27,7 @@ class Tarefa(db.Model):
             'id': self.id,
             'nome': self.nome,
             'descricao': self.descricao,
-            'duracao': self.duracao // 60,  # Converter segundos para minutos
+            'duracao': self.duracao,  # Mantendo em minutos
             'dataCriacao': self.data_criacao.timestamp() * 1000,
             'dataLimite': self.data_limite.timestamp() * 1000,
             'progresso': progresso,
@@ -51,12 +51,13 @@ def get_tarefas():
 @app.route('/tarefas', methods=['POST'])
 def add_tarefa():
     data = request.json
+    duracao_minutos = int(data['duracao'])  # Pegando diretamente em minutos
     nova_tarefa = Tarefa(
         nome=data['nome'],
         descricao=data.get('descricao', ''),
-        duracao=int(data['duracao']) * 60,
+        duracao=duracao_minutos,
         data_criacao=datetime.utcnow(),
-        data_limite=datetime.utcnow() + timedelta(minutes=int(data['duracao']))
+        data_limite=datetime.utcnow() + timedelta(minutes=duracao_minutos)
     )
     db.session.add(nova_tarefa)
     db.session.commit()
@@ -73,4 +74,3 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
     app.run(debug=True)
-
