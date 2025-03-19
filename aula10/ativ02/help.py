@@ -1,8 +1,11 @@
 import hashlib, json
-senha = "String a calcular"
+senha = "26"
 hash = hashlib.sha256(senha.encode()).hexdigest()
 print(hash)
 
 
 with open('usuarios.json', 'r') as f:
-    print(json.load(f))
+    users = json.load(f)
+    
+print(users['admin'])
+print(users['prof'])

@@ -39,49 +39,55 @@ def tentar_descriptografia(dados_cripto, chave_tentativa):
         return None
 
 def db_to_file(db_path, output_file_path):
-    """
-    Extrai um arquivo do banco de dados SQLite e salva no sistema de arquivos.
-    """
     # Conecta ao banco de dados
+    db_path = os.path.join(os.path.dirname(__file__), 'arquivos.db')
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
     # Busca o BLOB correspondente ao nome do arquivo
-    cursor.execute("SELECT data FROM segredos WHERE filename='segredo.enc'")
+    cursor.execute('''
+        SELECT data FROM segredos WHERE filename = 'segredo.enc'
+    ''')
     
     blob_data = cursor.fetchone()
     conn.close()
     
     if not blob_data:
-        raise ValueError("Arquivo não encontrado no banco de dados.")
+        raise ValueError(f"Arquivo não encontrado no banco de dados")
     
     # Escreve o conteúdo BLOB no arquivo de saída
     with open(output_file_path, 'wb') as file:
         file.write(blob_data[0])
-
-def forca_bruta(dados_cripto):
-    """
-    Testa todas as chaves numéricas de 8 dígitos (00000000 a 99999999)
-    e exibe cada chave testada.
-    """
-    for chave_tentativa in range(80_000_000, 85_000_001): 
-        if chave_tentativa % 100000 == 0:  # Mostra a senha a cada 100 mil tentativas
-            print(f"Tentando chave: {chave_tentativa:08d}")
         
-        resultado = tentar_descriptografia(dados_cripto, chave_tentativa)
-        if resultado and "Parabéns" in resultado:
-            print(f"\n🔥 Chave encontrada: {chave_tentativa:08d} 🔥")
-            print(f"Mensagem descriptografada: {resultado}")
-            return chave_tentativa  # Retorna a chave encontrada
-
-    print("\nNenhuma chave válida encontrada.")
-    return None
-
-    print("\nNenhuma chave válida encontrada.")
-    return None
-
 def main():
     print('Iniciando busca ao tesouro...')
+
+
+    # Extrai o arquivo criptografado do banco de dados
+    db_to_file('arquivos.db', 'segredo.enc')
+
+    # Lê o arquivo criptografado
+    with open('segredo.enc', 'rb') as f:
+        dados_cripto = f.read()
+
+    for chave in range(83000000, 850000000):
+        if chave % 100000 == 0:
+            print(f'Tentando chave: {str(chave).zfill(8)}')  # Print da chave que está sendo tentada
+        texto_descriptografado = tentar_descriptografia(dados_cripto, chave)
+        if texto_descriptografado:
+            #print(f'Dados descriptografados: {texto_descriptografado}')  # Print dos dados descriptografados
+            if 'Parabéns' in texto_descriptografado:
+                print(f'Chave encontrada: {str(chave).zfill(8)}')
+                #print(f'Texto descriptografado: {texto_descriptografado}')
+                break
+    else:
+        print('Nenhuma chave válida encontrada.')
+
+if __name__ == '__main__':
+    main()
+        
+    
+    #grupo https://meet.google.com/dnw-emhx-gfm
     # use força bruta para descriptogravar o segredo.enc
     # esse arquivo encontra-se dentro do arquivos.db no formato sqllite
     # a chave é numérica de 8 digitos
