@@ -39,34 +39,64 @@ def tentar_descriptografia(dados_cripto, chave_tentativa):
         return None
 
 def db_to_file(db_path, output_file_path):
+    """
+    Extrai um arquivo do banco de dados SQLite e salva no sistema de arquivos.
+    """
     # Conecta ao banco de dados
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
     # Busca o BLOB correspondente ao nome do arquivo
-    cursor.execute('''
-        SELECT .....
-    ''')
+    cursor.execute("SELECT data FROM segredos WHERE filename='segredo.enc'")
     
     blob_data = cursor.fetchone()
     conn.close()
     
     if not blob_data:
-        raise ValueError(f"Arquivo não encontrado no banco de dados")
+        raise ValueError("Arquivo não encontrado no banco de dados.")
     
     # Escreve o conteúdo BLOB no arquivo de saída
     with open(output_file_path, 'wb') as file:
         file.write(blob_data[0])
-        
-def main():
-    print('Iniciando busca ao tesouro...')
-    # use força bruta para descriptogravar o segredo.enc
-    # esse arquivo encontra-se dentro do arquivos.db no formato sqllite
-    # a chave é numérica de 8 digitos
-    # o texto descriptografado contém a palavra Parabéns
 
+def forca_bruta(dados_cripto):
+    """
+    Testa todas as chaves numéricas de 8 dígitos (00000000 a 99999999)
+    e exibe cada chave testada.
+    """
+    for chave_tentativa in range(80_000_000, 85_000_001): 
+        if chave_tentativa % 100000 == 0:  # Mostra a senha a cada 100 mil tentativas
+            print(f"Tentando chave: {chave_tentativa:08d}")
+        
+        resultado = tentar_descriptografia(dados_cripto, chave_tentativa)
+        if resultado and "Parabéns" in resultado:
+            print(f"\n🔥 Chave encontrada: {chave_tentativa:08d} 🔥")
+            print(f"Mensagem descriptografada: {resultado}")
+            return chave_tentativa  # Retorna a chave encontrada
+
+    print("\nNenhuma chave válida encontrada.")
+    return None
+
+    print("\nNenhuma chave válida encontrada.")
+    return None
+
+def main():
+    print("🔎 Iniciando busca ao tesouro...\n")
     
+    # Extrai o arquivo do banco de dados
+    db_to_file("arquivos.db", "segredo.enc")
     
+    # Lê os dados criptografados do arquivo extraído
+    with open("segredo.enc", "rb") as f:
+        dados_cripto = f.read()
+
+    # Inicia o ataque de força bruta para descobrir a chave
+    chave_encontrada = forca_bruta(dados_cripto)
+
+    if chave_encontrada:
+        print("\n✅ Desafio concluído com sucesso!")
+    else:
+        print("\n❌ Não foi possível encontrar a chave.")
 
 if __name__ == '__main__':
     main()
